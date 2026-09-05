@@ -218,7 +218,7 @@ const Panels = (() => {
         icon: "💸", title: "Balans yetarli emas",
         desc: `Xarid uchun ${price - s.balance} ball yetmayapti. Balansingiz: ${s.balance} ball.`,
         actions: [
-          { id: "topup", label: "Balans to'ldirish", cls: "btn-success", onClick: () => UI.toast("Admin bilan bog'laning → Yordam", "info") },
+          { id: "topup", label: "Balans to'ldirish", cls: "btn-success", onClick: () => topUpBalance() },
           { id: "skip", label: "Bekor qilish", cls: "btn-ghost" }
         ]
       });
@@ -233,7 +233,9 @@ const Panels = (() => {
     Store.setBalance(s.balance - price);
     Store.addHistory({
       title: `${game.name} • ${pack.amount}`,
-      sub: `ID: ${uid} • ${res.order.id}`,
+      sub: `ID: ${uid}`,
+      orderId: res.order.id,
+      status: res.order.status || "queued",
       amount: -price,
       icon: game.icon,
       type: "game"
@@ -243,11 +245,21 @@ const Panels = (() => {
 
     UI.openModal({
       icon: "🎉", title: "Donat muvaffaqiyatli!",
-      desc: `${game.name} • ${pack.amount}<br>Buyurtma raqami: <b>${res.order.id}</b><br>${pack.amount} yetkazilmoqda. Odatiy vaqt: 1–5 daqiqa.`,
+      desc: `${game.name} • ${pack.amount}<br>Buyurtma raqami: <b>${res.order.id}</b><br>${pack.amount} yetkazilmoqda. Statusni <b>Kabinet → Xaridlar</b> bo'limida kuzating.`,
       actions: [
         { id: "ok", label: "OK", cls: "btn-success" }
       ]
     });
+  }
+
+  function topUpBalance() {
+    if (CONFIG && CONFIG.PAYMENT_LINK) {
+      window.open(CONFIG.PAYMENT_LINK, "_blank");
+      UI.toast("To'lov sahifasi ochilmoqda...", "info");
+    } else {
+      App.goTo("support");
+      UI.toast("Admin bilan bog'lanib balans to'ldirasiz", "info");
+    }
   }
 
   /* ---------------- SERVICES ---------------- */
@@ -301,6 +313,8 @@ const Panels = (() => {
     Store.setBalance(s.balance - price);
     Store.addHistory({
       title: svc.name, sub: res.order.id,
+      orderId: res.order.id,
+      status: res.order.status || "processing",
       amount: -price, icon: svc.icon, type: "service"
     });
     updateBalanceUI();
@@ -400,10 +414,46 @@ const Panels = (() => {
         <div class="h-ico">${h.icon || "📦"}</div>
         <div class="h-info">
           <div class="h-title">${h.title}</div>
-          <div class="h-time">${h.sub || ""} • ${UI.timeAgo(h.at)}</div>
+          <div class="h-time">${h.sub || ""} ${h.orderId ? "• " + h.orderId : ""}</div>
+          <span class="order-status" data-order="${h.orderId || ""}">${statusBadge(h.status)}</span>
+          <div class="h-time">${UI.timeAgo(h.at)}</div>
         </div>
         <div class="h-amount ${h.amount > 0 ? "pos" : "neg"}">${h.amount > 0 ? "+" : ""}${h.amount}</div>
       </div>`).join("");
+    pollOrderStatuses(container);
+  }
+
+  const STATUS_META = {
+    queued:     { icon: "⏳", label: "Navbatda", cls: "st-queued" },
+    processing: { icon: "⚙️", label: "Bajarilmoqda", cls: "st-processing" },
+    done:       { icon: "✅", label: "Bajarildi", cls: "st-done" },
+    failed:     { icon: "❌", label: "Muvaffaqiyatsiz", cls: "st-failed" }
+  };
+
+  function statusBadge(status) {
+    const m = STATUS_META[status] || STATUS_META.queued;
+    return `<span class="badge ${m.cls}">${m.icon} ${m.label}</span>`;
+  }
+
+  const finishedOrders = new Set();
+
+  /* Buyurtma statuslarini real vaqtda tekshirish (polling) */
+  function pollOrderStatuses(scope) {
+    scope.querySelectorAll("[data-order]").forEach(badge => {
+      const orderId = badge.dataset.order;
+      if (!orderId || finishedOrders.has(orderId)) return;
+      API.getOrderStatus(orderId).then(res => {
+        if (!res || !res.ok) return;
+        badge.innerHTML = statusBadge(res.status);
+        if (res.status === "done" || res.status === "failed") {
+          finishedOrders.add(orderId);
+          if (document.visibilityState === "visible") {
+            UI.toast(`${res.status === "done" ? "✅" : "❌"} Buyurtma ${orderId} ${res.status === "done" ? "bajarildi" : "muvaffaqiyatsiz"}`,
+              res.status === "done" ? "success" : "error");
+          }
+        }
+      }).catch(() => {});
+    });
   }
 
   function renderStatsChart() {

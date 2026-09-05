@@ -193,19 +193,15 @@ const App = (() => {
   /* ---------- Support: contact admin ---------- */
   function contactAdmin() {
     haptic("medium");
-    const state = Store.get();
-    const adminName = "GameDonat_Admin"; // <-- ALMASHTIRING: haqiqiy username
-    const userLink = state.tgId || state.username || "foydalanuvchi";
-    let url;
+    const adminName = CONFIG.ADMIN_USERNAME || "GameDonat_Admin";
+    const url = `https://t.me/${adminName}`;
     if (tg && tg.openTelegramLink) {
       try {
-        url = `https://t.me/${adminName}`;
         tg.openTelegramLink(url);
         UI.toast("Admin chat'i ochilmoqda...", "info");
         return;
       } catch (e) {}
     }
-    url = `https://t.me/${adminName}`;
     window.open(url, "_blank");
   }
 
@@ -216,7 +212,13 @@ const App = (() => {
     UI.initParticles();
     Panels.updateBalanceUI();
 
-    // Set Telegram MainButton for context? optional
+    // API rejim belgisi (videoda va brauzerda ko'rinadi)
+    const badge = document.querySelector(".hero-badge");
+    if (badge) {
+      const live = API && API.MODE === "live";
+      badge.textContent = live ? "● LIVE API" : "● DEMO API";
+      badge.classList.add(live ? "api-live" : "api-sandbox");
+    }
 
     // splash
     runSplash();
