@@ -9,9 +9,7 @@ const Panels = (() => {
     headerBalance: () => document.getElementById("headerBalance"),
     gamesGrid: () => document.getElementById("gamesGrid"),
     homeGames: () => document.getElementById("homeGames"),
-    quickGrid: () => document.getElementById("quickGrid"),
     quickStats: () => document.getElementById("quickStats"),
-    servicesList: () => document.getElementById("servicesList"),
     gameDetail: () => document.getElementById("gameDetail"),
     promoList: () => document.getElementById("promoList"),
     profileAvatar: () => document.getElementById("profileAvatar"),
@@ -39,35 +37,13 @@ const Panels = (() => {
       <div class="stat-item" data-goto="profile">
         <div class="st-val">${orders}</div><div class="st-lab">Buyurtmalar</div>
       </div>
-      <div class="stat-item" data-goto="services">
+      <div class="stat-item" data-goto="profile">
         <div class="st-val">${UI.fmtMoney(totalSpent)}</div><div class="st-lab">Sarflangan</div>
       </div>
     `;
     container.querySelectorAll("[data-goto]").forEach(el => {
       el.addEventListener("click", () => App.goTo(el.dataset.goto));
     });
-  }
-
-  function renderQuickGrid() {
-    const quick = SERVICE_DATA.services.slice(0, 4);
-    const container = els.quickGrid();
-    container.innerHTML = quick.map(s => `
-      <div class="service-item" data-service="${s.id}">
-        <div class="sv-ico">${s.icon}</div>
-        <div class="sv-info">
-          <div class="sv-name">${s.name}</div>
-          <div class="sv-price">${s.price} ball</div>
-        </div>
-      </div>
-    `).join("") + `
-      <div class="service-item home-extra" data-goto="services">
-        <div class="sv-ico">➡️</div>
-        <div class="sv-info"><div class="sv-name">Barcha xizmatlar</div><div class="sv-desc">To'liq katalogni ko'rish</div></div>
-      </div>`;
-    container.querySelectorAll("[data-service]").forEach(el =>
-      el.addEventListener("click", () => confirmService(el.dataset.service)));
-    container.querySelectorAll("[data-goto]").forEach(el =>
-      el.addEventListener("click", () => App.goTo(el.dataset.goto)));
   }
 
   function renderHomeGames() {
@@ -262,70 +238,6 @@ const Panels = (() => {
     }
   }
 
-  /* ---------------- SERVICES ---------------- */
-  function renderServices(filter = "") {
-    const f = filter.trim().toLowerCase();
-    const list = SERVICE_DATA.services.filter(s =>
-      !f || s.name.toLowerCase().includes(f) || s.desc.toLowerCase().includes(f));
-    const container = els.servicesList();
-    if (!list.length) {
-      container.innerHTML = `<div class="empty-state"><div class="es-ico">🛠️</div>Xizmat topilmadi</div>`;
-      return;
-    }
-    container.innerHTML = list.map(s => `
-      <div class="service-item" data-service="${s.id}">
-        <div class="sv-ico">${s.icon}</div>
-        <div class="sv-info">
-          <div class="sv-name">${s.name} ${s.tag ? `<span class="pk-tag" style="position:static;display:inline-block;margin-left:4px">${s.tag}</span>` : ""}</div>
-          <div class="sv-desc">${s.desc}</div>
-        </div>
-        <div class="sv-price">${s.price} ball</div>
-        <div class="sv-arrow">›</div>
-      </div>`).join("");
-    container.querySelectorAll("[data-service]").forEach(el =>
-      el.addEventListener("click", () => confirmService(el.dataset.service)));
-  }
-
-  function confirmService(serviceId) {
-    const svc = findServiceById(serviceId);
-    if (!svc) return;
-    const s = Store.get();
-    const price = s.discountPct > 0 ? Math.round(svc.price * (1 - s.discountPct / 100)) : svc.price;
-    UI.openModal({
-      icon: svc.icon, title: svc.name,
-      desc: `${svc.desc}<br><br>Narxi: <b>${price} ball</b><br>Hisobingizda: ${s.balance} ball`,
-      actions: [
-        { id: "buy", label: "Xarid qilish", cls: "btn-success", onClick: () => doServicePurchase(svc, price) },
-        { id: "cancel", label: "Bekor qilish", cls: "btn-ghost" }
-      ]
-    });
-  }
-
-  async function doServicePurchase(svc, price) {
-    const s = Store.get();
-    if (s.balance < price) {
-      UI.toast("Balans yetarli emas", "error");
-      return;
-    }
-    UI.toast("Xizmat sotib olinmoqda...", "info");
-    const res = await API.buyService(svc.id);
-    if (!res.ok) { UI.toast(res.error, "error"); return; }
-    Store.setBalance(s.balance - price);
-    Store.addHistory({
-      title: svc.name, sub: res.order.id,
-      orderId: res.order.id,
-      status: res.order.status || "processing",
-      amount: -price, icon: svc.icon, type: "service"
-    });
-    updateBalanceUI();
-    renderProfile();
-    UI.openModal({
-      icon: "✅", title: "Xizmat faollashtirildi!",
-      desc: `${svc.name}<br>Buyurtma: <b>${res.order.id}</b>`,
-      actions: [{ id: "ok", label: "OK", cls: "btn-success" }]
-    });
-  }
-
   /* ---------------- PROMO ---------------- */
   function renderPromoList() {
     const s = Store.get();
@@ -508,8 +420,8 @@ const Panels = (() => {
   }
 
   return {
-    renderQuickStats, renderQuickGrid, renderHomeGames,
-    renderGames, openGame, renderServices, renderPromoList,
+    renderQuickStats, renderHomeGames,
+    renderGames, openGame, renderPromoList,
     renderProfile, toggleProfileTab, renderFaq,
     updateBalanceUI, selectPack, applyPromo, loadGameImages
   };

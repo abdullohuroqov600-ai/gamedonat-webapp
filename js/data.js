@@ -1,5 +1,5 @@
 /* ==========================================================================
-   DATA — static catalog: games, services, promos, FAQ
+   DATA — static catalog: games, promos, FAQ
    ========================================================================== */
 "use strict";
 
@@ -70,19 +70,6 @@ const GAME_DATA = {
   ]
 };
 
-const SERVICE_DATA = {
-  services: [
-    { id: "tg-premium", name: "Telegram Premium", icon: "⭐", desc: "Oyiga Premium obuna", price: 12, tag: "HOT" },
-    { id: "tg-stars", name: "Telegram Stars", icon: "✨", desc: "Stars ballari (50 dona)", price: 8, tag: "NEW" },
-    { id: "tg-plus", name: "Telegram Plus", icon: "📱", desc: "Telegram Plus modifikasiya", price: 5 },
-    { id: "nick", name: "Ism (Nick) o'zgartirish", icon: "✏️", desc: "Telegram nickni o'zgartirish", price: 3 },
-    { id: "bio", name: "Bio / Rasm sozlash", icon: "🖼️", desc: "Profil jozibasini oshirish", price: 2 },
-    { id: "group", name: "Guruh yaratish", icon: "👥", desc: "Guruh va kanal yaratish", price: 6 },
-    { id: "verify", name: "Verification (✓)", icon: "✅", desc: "Premium nac belgisi", price: 19, tag: "VIP" },
-    { id: "member", name: "Member yig'ish", icon: "📈", desc: "Kanalga obunachilar", price: 10 }
-  ]
-};
-
 const PROMO_DATA = {
   "GAME10": { type: "balance", reward: 10, label: "10 ball bonus" },
   "START50": { type: "balance", reward: 50, label: "50 ball bonus" },
@@ -100,7 +87,4 @@ const FAQ_DATA = [
 
 function findGameById(id) {
   return (GAME_DATA.games || []).find(g => g.id === id);
-}
-function findServiceById(id) {
-  return (SERVICE_DATA.services || []).find(s => s.id === id);
 }

@@ -90,25 +90,6 @@ const API = (() => {
     return { ok: true, status: o.status, finishedAt: o.finishedAt };
   }
 
-  async function simBuyService(serviceId) {
-    await delay(400 + Math.random() * 400);
-    const svc = findServiceById(serviceId);
-    if (!svc) return fail("Xizmat topilmadi");
-    const order = {
-      id: "TS" + Math.random().toString(36).slice(2, 8).toUpperCase(),
-      service: svc.name,
-      price: svc.price,
-      status: "processing",
-      createdAt: Date.now()
-    };
-    internalOrders.set(order.id, order);
-    setTimeout(() => {
-      const o = internalOrders.get(order.id);
-      if (o) { o.status = "done"; o.finishedAt = Date.now(); internalOrders.set(order.id, o); }
-    }, 5000 + Math.random() * 4000);
-    return { ok: true, order };
-  }
-
   async function simValidatePromo(code) {
     await delay(400 + Math.random() * 300);
     const key = String(code || "").trim().toUpperCase();
@@ -169,15 +150,6 @@ const API = (() => {
     return simOrderStatus(orderId);
   }
 
-  async function buyService(serviceId) {
-    if (MODE === "live") {
-      const r = await http("POST", CONFIG.TOPUP_API_PATHS.order, { serviceId, quantity: 1 });
-      if (!r.ok) return r;
-      return { ok: true, order: r.data };
-    }
-    return simBuyService(serviceId);
-  }
-
   async function validatePromo(code) {
     if (MODE === "live") {
       const r = await http("POST", "/promo", { code: String(code || "").toUpperCase() });
@@ -190,6 +162,6 @@ const API = (() => {
     MODE,
     ping, getGames, getPacks,
     createOrder, getOrderStatus,
-    buyService, validatePromo
+    validatePromo
   };
 })();

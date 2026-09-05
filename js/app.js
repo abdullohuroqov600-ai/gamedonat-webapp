@@ -60,7 +60,7 @@ const App = (() => {
   }
 
   /* ---------- Navigation ---------- */
-  const tabMap = ["home", "games", "services", "promo", "profile", "support", "game-detail"];
+  const tabMap = ["home", "games", "promo", "profile", "support", "game-detail"];
 
   function showPanel(name) {
     document.querySelectorAll(".panel").forEach(p => p.classList.remove("active"));
@@ -83,16 +83,11 @@ const App = (() => {
     switch (tab) {
       case "home":
         Panels.renderQuickStats();
-        Panels.renderQuickGrid();
         Panels.renderHomeGames();
         break;
       case "games":
         document.getElementById("gameSearch").value = "";
         Panels.renderGames();
-        break;
-      case "services":
-        document.getElementById("serviceSearch").value = "";
-        Panels.renderServices();
         break;
       case "promo":
         document.getElementById("promoResult").innerHTML = "";
@@ -153,9 +148,6 @@ const App = (() => {
     // Game search
     const gs = document.getElementById("gameSearch");
     gs.addEventListener("input", () => { Panels.renderGames(gs.value); });
-    // Service search
-    const ss = document.getElementById("serviceSearch");
-    ss.addEventListener("input", () => { Panels.renderServices(ss.value); });
 
     // Promo
     document.getElementById("promoApply").addEventListener("click", () => {
@@ -227,7 +219,6 @@ const App = (() => {
 
     // home default
     Panels.renderQuickStats();
-    Panels.renderQuickGrid();
     Panels.renderHomeGames();
 
     // warm up API
